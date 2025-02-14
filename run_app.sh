@@ -17,13 +17,31 @@ module list
 # this will allow multiple instances of GUI servers to be run from the same host node
 port="8000" #should be the same with the port in app.py
 pfound="0"
-while [ $port -lt 65535 ]; do
+
+# Check if virtual environment exists
+if [ ! -f "$VENV_PATH" ]; then
+    echo "Error: Virtual environment not found at $VENV_PATH"
+    echo "Please create it first using the instructions in README.md"
+    exit 1
+fi
+
+# Check if Flask app exists
+if [ ! -f "$PYTHON_SCRIPT" ]; then
+    echo "Error: Flask application not found at $PYTHON_SCRIPT"
+    exit 1
+fi
+
+# Add timeout for port searching
+MAX_PORT_ATTEMPTS=1000
+port_attempts=0
+while [ $port -lt 65535 ] && [ $port_attempts -lt $MAX_PORT_ATTEMPTS ]; do
   check=$(ss -tuna | awk '{print $4}' | grep ":$port *")
   if [ "$check" == "" ]; then
     pfound="1"
     break
   fi
   : $((++port))
+  port_attempts=$((port_attempts + 1))
 done
 
 if [ $pfound -eq 0 ]; then
